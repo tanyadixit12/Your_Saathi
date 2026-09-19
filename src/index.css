@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --app-font-scale: 1;
+  }
+
+  html {
+    font-size: 18px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html.font-size-normal {
+    font-size: 17px;
+  }
+
+  html.font-size-large {
+    font-size: 20px;
+  }
+
+  html.font-size-extra-large {
+    font-size: 23px;
+  }
+
+  /* High contrast theme */
+  html.theme-high-contrast {
+    color-scheme: dark;
+    --bg-canvas: #000000;
+    --fg-main: #ffffff;
+    --fg-muted: #e6e6e6;
+    --border-main: #ffffff;
+    --accent-focus: #ffeb3b;
+  }
+
+  html.theme-high-contrast body {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  html.theme-high-contrast .saathi-card {
+    background-color: #0a0a0a !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+  }
+
+  html.theme-high-contrast button {
+    border-width: 2px !important;
+  }
+
+  /* Reduced motion */
+  html.reduced-motion *,
+  html.reduced-motion *::before,
+  html.reduced-motion *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* Keyboard focus states */
+  *:focus-visible {
+    outline: 3px solid #f59e0b !important;
+    outline-offset: 3px !important;
+  }
+
+  html.theme-high-contrast *:focus-visible {
+    outline: 4px solid #ffff00 !important;
+    outline-offset: 4px !important;
+  }
+}
