@@ -34,7 +34,7 @@ const PRESET_MESSAGES = [
 ];
 
 export const SafetyView: React.FC = () => {
-  const { setCurrentView, trustedContacts, speakText, language, t } = useApp();
+  const { setCurrentView, trustedContacts, speakText } = useApp();
   const [messageText, setMessageText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [result, setResult] = useState<SafetyAnalysisResult | null>(null);
@@ -51,7 +51,7 @@ export const SafetyView: React.FC = () => {
   const handleCheckSafety = async (textToCheck?: string) => {
     const text = textToCheck || messageText;
     if (!text.trim()) {
-      setError(language === 'hi' ? 'कृपया पहले कोई संदेश पेस्ट करें या चुनें।' : 'Please paste a message or choose a sample to inspect.');
+      setError('Please paste a message or choose a sample to inspect.');
       return;
     }
     setError('');
@@ -62,7 +62,7 @@ export const SafetyView: React.FC = () => {
       const res = await fetch('/api/ai/safety-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, messageText: text, language }),
+        body: JSON.stringify({ message: text, messageText: text }),
       });
 
       if (res.ok) {
@@ -91,14 +91,14 @@ export const SafetyView: React.FC = () => {
         <div>
           <button
             onClick={() => setCurrentView('dashboard')}
-            className="flex items-center gap-2 text-stone-600 dark:text-stone-400 font-bold mb-2 hover:underline focus-visible:ring-2 ring-rose-500 rounded p-1"
+            className="flex items-center gap-2 text-stone-600 dark:text-stone-400 font-bold mb-2 hover:underline"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Back to {t.myDay}</span>
+            <span>Back to My Day</span>
           </button>
           <h1 className="text-3xl sm:text-5xl font-black text-stone-950 dark:text-white flex items-center gap-3">
             <ShieldCheck className="w-10 h-10 text-rose-600" />
-            <span>{t.staySafe}: {t.checkAMessage}</span>
+            <span>Is This Safe? (Scam Checker)</span>
           </h1>
           <p className="text-lg sm:text-xl font-bold text-stone-600 dark:text-stone-400 mt-1">
             Check any strange SMS, WhatsApp message, email, or phone call request.
@@ -116,7 +116,7 @@ export const SafetyView: React.FC = () => {
             <button
               key={idx}
               onClick={() => handleSelectSample(msg.text)}
-              className="text-left p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-300 dark:border-stone-700 hover:border-rose-500 font-bold text-stone-900 dark:text-white text-base shadow-sm transition-all focus-visible:ring-4 ring-rose-500"
+              className="text-left p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-300 dark:border-stone-700 hover:border-rose-500 font-bold text-stone-900 dark:text-white text-base shadow-sm transition-all"
             >
               <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 inline-block mb-2">
                 {msg.category}
@@ -128,77 +128,73 @@ export const SafetyView: React.FC = () => {
       </div>
 
       {/* Input Form */}
-      <section className="bg-white dark:bg-stone-900 border-3 border-stone-300 dark:border-stone-700 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
-        <div>
-          <label
-            htmlFor="scam-input"
-            className="block text-xl font-black text-stone-900 dark:text-white mb-2"
-          >
-            Paste the suspicious message or describe the phone call:
-          </label>
-          <textarea
-            id="scam-input"
-            rows={5}
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Paste the SMS, WhatsApp text, or email here..."
-            className="w-full p-4 rounded-2xl border-2 border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white font-semibold text-lg focus:border-rose-500 focus:outline-none focus-visible:ring-4 ring-rose-400"
-          />
-        </div>
+      <div className="bg-white dark:bg-stone-900 border-3 border-stone-300 dark:border-stone-700 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+        <label htmlFor="msg-input" className="text-xl font-black text-stone-950 dark:text-white block">
+          Paste the message you received:
+        </label>
 
-        {/* Privacy Guard Notice */}
+        <textarea
+          id="msg-input"
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
+          rows={5}
+          placeholder="Paste SMS, WhatsApp text, or email here. Example: 'Your bank account is blocked, call this number...'"
+          className="w-full p-4 rounded-2xl border-2 border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white font-medium text-lg focus:border-rose-500 focus:outline-none leading-relaxed"
+        />
+
+        {/* Sensitive data warning banner */}
         {hasSensitiveDataWarning && (
-          <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-400 text-amber-900 dark:text-amber-200 flex items-start gap-3">
-            <Lock className="w-6 h-6 shrink-0 text-amber-600 mt-0.5" />
+          <div className="bg-amber-100 border-2 border-amber-400 rounded-xl p-4 flex items-start gap-3 text-amber-950">
+            <Lock className="w-6 h-6 text-amber-700 shrink-0 mt-0.5" />
             <div>
-              <div className="font-black text-base">Privacy Reminder:</div>
-              <div className="text-sm font-semibold">
-                Never enter your actual banking passwords, card PINs, or real OTP numbers into any website.
-              </div>
+              <span className="font-extrabold block">Privacy Protection Notice:</span>
+              <span className="font-semibold text-sm">
+                You appear to have entered numbers that could look like a card, PIN, or OTP. Never share confidential codes or passwords with anyone.
+              </span>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="p-4 rounded-xl bg-rose-100 text-rose-800 border border-rose-300 font-bold flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
-            <span>{error}</span>
+          <div className="p-3 bg-rose-100 text-rose-800 rounded-xl font-bold text-base">
+            {error}
           </div>
         )}
 
-        <button
-          onClick={() => handleCheckSafety()}
-          disabled={loading || !messageText.trim()}
-          className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-black text-2xl shadow-lg transition-all active:scale-95 focus-visible:ring-4 ring-rose-400 min-h-[64px]"
-        >
-          <ShieldCheck className={`w-7 h-7 ${loading ? 'animate-spin' : ''}`} />
-          <span>{loading ? 'Checking Safety with Aasra...' : 'Is This Message Safe? Check Now'}</span>
-        </button>
-      </section>
+        <div className="flex flex-wrap gap-4 pt-2">
+          <button
+            onClick={() => handleCheckSafety()}
+            disabled={loading || !messageText.trim()}
+            className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-black text-xl shadow-lg transition-transform active:scale-95 border-2 border-rose-700 min-h-[56px]"
+          >
+            <ShieldCheck className="w-6 h-6" />
+            <span>{loading ? 'Checking for warning signs...' : 'Check This Message'}</span>
+          </button>
 
-      {/* Loading indicator */}
-      {loading && (
-        <div className="p-8 rounded-3xl bg-rose-50 dark:bg-stone-900 border-3 border-rose-400 text-center space-y-4 animate-pulse">
-          <Sparkles className="w-12 h-12 text-rose-600 mx-auto animate-spin" />
-          <h2 className="text-2xl font-black text-stone-900 dark:text-white">
-            Aasra is inspecting this message for fraud signals...
-          </h2>
-          <p className="text-stone-600 dark:text-stone-400 font-bold">
-            Checking for urgency traps, fake links, threats, and credential theft patterns.
-          </p>
+          {messageText && (
+            <button
+              onClick={() => {
+                setMessageText('');
+                setResult(null);
+              }}
+              className="px-6 py-4 rounded-2xl bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold text-base min-h-[56px]"
+            >
+              Clear
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Result Display */}
-      {result && !loading && (
+      {/* ANALYSIS RESULTS */}
+      {result && (
         <section
           aria-label="Safety Analysis Result"
-          className={`rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 border-4 ${
+          className={`border-4 rounded-3xl p-6 sm:p-10 shadow-xl space-y-6 ${
             result.riskLevel === 'danger'
-              ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-600 text-rose-950 dark:text-rose-50'
+              ? 'bg-rose-50/70 dark:bg-stone-900 border-rose-500'
               : result.riskLevel === 'suspicious'
-              ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-500 text-amber-950 dark:text-amber-50'
-              : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-600 text-emerald-950 dark:text-emerald-50'
+              ? 'bg-amber-50/70 dark:bg-stone-900 border-amber-500'
+              : 'bg-emerald-50/70 dark:bg-stone-900 border-emerald-500'
           }`}
         >
           {/* Status Header */}
@@ -243,18 +239,18 @@ export const SafetyView: React.FC = () => {
                   `Safety assessment: ${result.simpleExplanation}. Recommended next steps: ${result.whatToDoNow.join('. ')}`
                 )
               }
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-stone-900 text-white dark:bg-white dark:text-stone-900 font-bold text-base shadow-sm focus-visible:ring-4 ring-stone-500 min-h-[48px]"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-stone-900 text-white dark:bg-white dark:text-stone-900 font-bold text-base shadow-sm"
               aria-label="Listen to safety advice"
             >
               <Volume2 className="w-5 h-5" />
-              <span>{t.listen}</span>
+              <span>Listen</span>
             </button>
           </div>
 
           {/* Explanation */}
           <div className="bg-white dark:bg-stone-800/90 rounded-2xl p-6 border-2 border-stone-200 dark:border-stone-700">
             <h3 className="text-xl font-black text-stone-950 dark:text-white mb-2">
-              Why Aasra made this assessment:
+              Why Saathi made this assessment:
             </h3>
             <p className="text-xl font-bold text-stone-800 dark:text-stone-100 leading-relaxed">
               {result.simpleExplanation}
@@ -305,7 +301,7 @@ export const SafetyView: React.FC = () => {
             </div>
             <a
               href={`tel:${trustedContact.phone}`}
-              className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-lg shadow-md whitespace-nowrap min-h-[48px] focus-visible:ring-4 ring-emerald-400"
+              className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-lg shadow-md whitespace-nowrap min-h-[48px]"
             >
               <PhoneCall className="w-5 h-5" />
               <span>Call {trustedContact.name} ({trustedContact.relationship})</span>
@@ -316,7 +312,7 @@ export const SafetyView: React.FC = () => {
           <div className="pt-2 text-stone-600 dark:text-stone-400 text-sm font-semibold flex items-center gap-2">
             <Info className="w-5 h-5 text-stone-400 shrink-0" />
             <span>
-              Aasra analyzes communication patterns to identify known scam tactics. Aasra does not claim 100% certainty. Always verify directly through official phone numbers printed on your bank cards or statements.
+              Saathi analyzes communication patterns to identify known scam tactics. Saathi does not claim 100% certainty. Always verify directly through official phone numbers printed on your bank cards or statements.
             </span>
           </div>
         </section>

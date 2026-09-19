@@ -1,5 +1,5 @@
 {
-  "name": "Aasra — Simple Daily Companion",
+  "name": "Saathi — Simple Daily Companion",
   "description": "An accessible, intelligent, and trustworthy daily companion for senior citizens to understand documents, remember medicines & appointments, and stay safe.",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

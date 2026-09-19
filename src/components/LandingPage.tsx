@@ -36,7 +36,7 @@ export const LandingPage: React.FC = () => {
 
         {/* Mandatory Subheading */}
         <p className="text-xl sm:text-2xl md:text-3xl font-medium text-stone-700 dark:text-stone-300 max-w-3xl mb-10 leading-relaxed">
-          Aasra helps you understand, remember and stay safe — without making
+          Saathi helps you understand, remember and stay safe — without making
           technology complicated.
         </p>
 
@@ -148,7 +148,7 @@ export const LandingPage: React.FC = () => {
                   Voice-First Friendly
                 </h3>
                 <p className="text-lg font-medium text-stone-700 dark:text-stone-300">
-                  Just tap "Talk to Aasra" and ask anything: "What medicines do I have today?"
+                  Just tap "Talk to Saathi" and ask anything: "What medicines do I have today?"
                 </p>
               </div>
             </div>
@@ -166,7 +166,7 @@ export const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="py-8 text-center text-stone-500 dark:text-stone-400 text-sm border-t border-stone-200 dark:border-stone-800">
         <p className="font-semibold">
-          Aasra — Your Simple Daily Companion &bull; Built with Google Gemini API
+          Saathi — Your Simple Daily Companion &bull; Built with Google Gemini API
         </p>
         <p className="text-xs mt-1">
           Designed for accessibility and digital inclusion. Not a medical or emergency dispatch service.

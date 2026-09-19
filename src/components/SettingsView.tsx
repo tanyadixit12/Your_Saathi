@@ -1,17 +1,17 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { FontSizePreference, ContrastPreference, MotionPreference, LanguagePreference } from '../types';
+import { FontSizePreference, ContrastPreference, MotionPreference } from '../types';
 import {
   Settings,
   Type,
   Sun,
+  Eye,
   Activity,
   User,
   RotateCcw,
   ArrowLeft,
   CheckCircle2,
   Volume2,
-  Globe,
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
@@ -19,13 +19,10 @@ export const SettingsView: React.FC = () => {
     user,
     preferences,
     updatePreferences,
-    language,
-    setLanguage,
     resetToDemo,
     setCurrentView,
     speakText,
     showActionNotice,
-    t,
   } = useApp();
 
   const handleFontChange = (size: FontSizePreference) => {
@@ -41,11 +38,7 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleTestVoice = () => {
-    const text =
-      language === 'hi'
-        ? 'नमस्ते अनिता जी! आसरा आपके दैनिक कार्यों और स्वास्थ्य का ध्यान रखने के लिए हमेशा तैयार है।'
-        : 'Hello Anita! This is how Aasra sounds when reading out your daily schedule.';
-    speakText(text);
+    speakText("Hello Anita! This is how Saathi sounds when reading out your daily schedule.");
   };
 
   const handleResetDemo = async () => {
@@ -55,11 +48,7 @@ export const SettingsView: React.FC = () => {
       )
     ) {
       await resetToDemo();
-      showActionNotice(
-        language === 'hi'
-          ? 'अनिता शर्मा का डेमो प्रोफ़ाइल रीसेट किया गया।'
-          : 'Demo profile restored for Anita Sharma.'
-      );
+      showActionNotice('Demo profile restored for Anita Sharma.');
     }
   };
 
@@ -70,72 +59,23 @@ export const SettingsView: React.FC = () => {
         <div>
           <button
             onClick={() => setCurrentView('dashboard')}
-            className="flex items-center gap-2 text-stone-600 dark:text-stone-400 font-bold mb-2 hover:underline focus-visible:ring-2 ring-amber-500 rounded p-1"
+            className="flex items-center gap-2 text-stone-600 dark:text-stone-400 font-bold mb-2 hover:underline"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Back to {t.myDay}</span>
+            <span>Back to My Day</span>
           </button>
           <h1 className="text-3xl sm:text-5xl font-black text-stone-950 dark:text-white flex items-center gap-3">
             <Settings className="w-10 h-10 text-amber-600" />
-            <span>{t.settings} & Accessibility</span>
+            <span>Accessibility & Settings</span>
           </h1>
           <p className="text-lg sm:text-xl font-bold text-stone-600 dark:text-stone-400 mt-1">
-            Customize language, text size, contrast, animations, and voice readability.
+            Customize text size, contrast, animations, and voice readability.
           </p>
         </div>
       </div>
 
       <div className="space-y-6">
-        {/* 1. LANGUAGE SELECTION */}
-        <section className="bg-white dark:bg-stone-900 border-3 border-stone-300 dark:border-stone-700 rounded-3xl p-6 sm:p-8 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-stone-800 text-amber-800 dark:text-amber-300 flex items-center justify-center">
-              <Globe className="w-7 h-7" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-stone-950 dark:text-white">
-                Language (भाषा)
-              </h2>
-              <p className="text-base font-bold text-stone-600 dark:text-stone-400">
-                Choose your preferred language for daily briefings, voice interaction, and alerts.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            {[
-              { id: 'en', label: 'English', desc: 'Plain, jargon-free English for seniors' },
-              { id: 'hi', label: 'हिंदी (Hindi)', desc: 'स्पष्ट, सरल और आदरणीय हिंदी' },
-              { id: 'hinglish', label: 'Hinglish', desc: 'Everyday friendly conversational mix' },
-            ].map((opt) => {
-              const isSelected = language === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => setLanguage(opt.id as LanguagePreference)}
-                  className={`p-5 rounded-2xl border-3 text-left transition-all min-h-[80px] focus-visible:ring-4 ring-amber-500 ${
-                    isSelected
-                      ? 'bg-amber-100/70 dark:bg-stone-800 border-amber-600 shadow-md ring-2 ring-amber-500'
-                      : 'border-stone-300 dark:border-stone-700 hover:border-amber-400 bg-stone-50 dark:bg-stone-800/50'
-                  }`}
-                  aria-pressed={isSelected}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-black text-stone-950 dark:text-white">
-                      {opt.label}
-                    </span>
-                    {isSelected && <CheckCircle2 className="w-6 h-6 text-amber-600" />}
-                  </div>
-                  <p className="text-sm font-bold text-stone-600 dark:text-stone-400 mt-1">
-                    {opt.desc}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* 2. TEXT SIZE */}
+        {/* 1. TEXT SIZE */}
         <section className="bg-white dark:bg-stone-900 border-3 border-stone-300 dark:border-stone-700 rounded-3xl p-6 sm:p-8 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-stone-800 text-amber-800 dark:text-amber-300 flex items-center justify-center">
@@ -162,7 +102,7 @@ export const SettingsView: React.FC = () => {
                 <button
                   key={opt.id}
                   onClick={() => handleFontChange(opt.id as FontSizePreference)}
-                  className={`p-5 rounded-2xl border-3 text-left transition-all min-h-[80px] focus-visible:ring-4 ring-amber-500 ${
+                  className={`p-5 rounded-2xl border-3 text-left transition-all min-h-[80px] ${
                     isSelected
                       ? 'bg-amber-100/70 dark:bg-stone-800 border-amber-600 shadow-md ring-2 ring-amber-500'
                       : 'border-stone-300 dark:border-stone-700 hover:border-amber-400 bg-stone-50 dark:bg-stone-800/50'
@@ -184,7 +124,7 @@ export const SettingsView: React.FC = () => {
           </div>
         </section>
 
-        {/* 3. HIGH CONTRAST */}
+        {/* 2. HIGH CONTRAST */}
         <section className="bg-white dark:bg-stone-900 border-3 border-stone-300 dark:border-stone-700 rounded-3xl p-6 sm:p-8 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-stone-800 text-blue-800 dark:text-blue-300 flex items-center justify-center">
@@ -218,7 +158,7 @@ export const SettingsView: React.FC = () => {
                 <button
                   key={opt.id}
                   onClick={() => handleContrastChange(opt.id as ContrastPreference)}
-                  className={`p-5 rounded-2xl border-3 text-left transition-all min-h-[80px] focus-visible:ring-4 ring-amber-500 ${
+                  className={`p-5 rounded-2xl border-3 text-left transition-all min-h-[80px] ${
                     isSelected
                       ? 'bg-amber-100/70 dark:bg-stone-800 border-amber-600 shadow-md ring-2 ring-amber-500'
                       : 'border-stone-300 dark:border-stone-700 hover:border-amber-400 bg-stone-50 dark:bg-stone-800/50'
@@ -240,7 +180,7 @@ export const SettingsView: React.FC = () => {
           </div>
         </section>
 
-        {/* 4. REDUCED MOTION */}
+        {/* 3. REDUCED MOTION */}
         <section className="bg-white dark:bg-stone-900 border-3 border-stone-300 dark:border-stone-700 rounded-3xl p-6 sm:p-8 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-stone-800 text-emerald-800 dark:text-emerald-300 flex items-center justify-center">
@@ -274,7 +214,7 @@ export const SettingsView: React.FC = () => {
                 <button
                   key={opt.id}
                   onClick={() => handleMotionChange(opt.id as MotionPreference)}
-                  className={`p-5 rounded-2xl border-3 text-left transition-all min-h-[80px] focus-visible:ring-4 ring-amber-500 ${
+                  className={`p-5 rounded-2xl border-3 text-left transition-all min-h-[80px] ${
                     isSelected
                       ? 'bg-amber-100/70 dark:bg-stone-800 border-amber-600 shadow-md ring-2 ring-amber-500'
                       : 'border-stone-300 dark:border-stone-700 hover:border-amber-400 bg-stone-50 dark:bg-stone-800/50'
@@ -296,7 +236,7 @@ export const SettingsView: React.FC = () => {
           </div>
         </section>
 
-        {/* 5. VOICE ASSISTANT SOUND TEST */}
+        {/* 4. VOICE ASSISTANT SOUND TEST */}
         <section className="bg-white dark:bg-stone-900 border-3 border-stone-300 dark:border-stone-700 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1 text-center sm:text-left">
             <h2 className="text-2xl font-black text-stone-950 dark:text-white flex items-center gap-2 justify-center sm:justify-start">
@@ -310,13 +250,13 @@ export const SettingsView: React.FC = () => {
 
           <button
             onClick={handleTestVoice}
-            className="px-6 py-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-lg shadow-md whitespace-nowrap min-h-[48px] focus-visible:ring-4 ring-amber-400"
+            className="px-6 py-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-lg shadow-md whitespace-nowrap min-h-[48px]"
           >
             🔊 Test Voice Output
           </button>
         </section>
 
-        {/* 6. DEMO USER PROFILE & RESET */}
+        {/* 5. DEMO USER PROFILE & RESET */}
         <section className="bg-stone-100 dark:bg-stone-900 border-2 border-stone-300 dark:border-stone-800 rounded-3xl p-6 sm:p-8 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-stone-300 dark:bg-stone-700 text-stone-800 dark:text-stone-200 flex items-center justify-center">
@@ -327,7 +267,7 @@ export const SettingsView: React.FC = () => {
                 Demo Profile: {user?.name || 'Anita Sharma'}
               </h2>
               <p className="text-base font-bold text-stone-600 dark:text-stone-400">
-                Age: {user?.age || 68} &bull; Mode: Independent Companion &bull; Senior Citizen Care
+                Age: {user?.age || 68} &bull; Language: English (Plain Words) &bull; Mode: Independent Companion
               </p>
             </div>
           </div>
@@ -339,7 +279,7 @@ export const SettingsView: React.FC = () => {
 
             <button
               onClick={handleResetDemo}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-900 dark:text-white font-black text-base border-2 border-stone-400 dark:border-stone-600 min-h-[48px] focus-visible:ring-4 ring-stone-400"
+              className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-900 dark:text-white font-black text-base border-2 border-stone-400 dark:border-stone-600 min-h-[48px]"
             >
               <RotateCcw className="w-5 h-5" />
               <span>Reset Demo Data</span>
