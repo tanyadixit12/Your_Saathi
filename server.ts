@@ -12,9 +12,11 @@ import {
 import {
   generateDailyBriefing,
   simplifyDocument,
+  simplifyDocumentMore,
   analyzeSuspiciousMessage,
   generateTaskPreparation,
   answerCompanionQuestion,
+  invalidateAiCache,
 } from './server/ai';
 
 dotenv.config();
@@ -26,12 +28,35 @@ const PORT = 3000;
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
+// Simple in-memory rate limiter for AI endpoints (Max 60 requests per minute per IP)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const aiRateLimiter = (req: Request, res: Response, next: any) => {
+  const ip = req.ip || req.socket.remoteAddress || 'client';
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const current = rateLimitMap.get(ip);
+
+  if (!current || now > current.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
+    return next();
+  }
+
+  if (current.count >= 60) {
+    return res.status(429).json({
+      error: 'Please wait a moment before asking Aasra again. We are taking care of your requests.',
+    });
+  }
+
+  current.count++;
+  next();
+};
+
 // Request logging without leaking sensitive personal payload content
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`[API] ${req.method} ${req.path} -> ${res.statusCode} (${duration}ms)`);
+    console.log(`[Aasra API] ${req.method} ${req.path} -> ${res.statusCode} (${duration}ms)`);
   });
   next();
 });
@@ -55,6 +80,7 @@ app.get('/api/user/data', async (req: Request, res: Response) => {
 // Reset Demo Data
 app.post('/api/user/reset', async (req: Request, res: Response) => {
   try {
+    invalidateAiCache();
     const data = await resetDemoData();
     res.json({ message: 'Demo data reset successfully.', data });
   } catch (err) {
@@ -121,6 +147,7 @@ app.patch('/api/medicines/:id/status', async (req: Request, res: Response) => {
     const db = await getDb();
     db.run('UPDATE medicines SET status = ? WHERE id = ?', [status, id]);
     saveDb();
+    invalidateAiCache('briefing');
 
     res.json({ id, status });
   } catch (err) {
@@ -135,6 +162,7 @@ app.delete('/api/medicines/:id', async (req: Request, res: Response) => {
     const db = await getDb();
     db.run('DELETE FROM medicines WHERE id = ?', [id]);
     saveDb();
+    invalidateAiCache('briefing');
     res.json({ success: true, id });
   } catch (err) {
     console.error('Error deleting medicine:', err);
@@ -202,6 +230,7 @@ app.patch('/api/appointments/:id/toggle', async (req: Request, res: Response) =>
 
     db.run('UPDATE appointments SET completed = ? WHERE id = ?', [newCompleted ? 1 : 0, id]);
     saveDb();
+    invalidateAiCache('briefing');
 
     res.json({ id, completed: newCompleted });
   } catch (err) {
@@ -216,6 +245,7 @@ app.delete('/api/appointments/:id', async (req: Request, res: Response) => {
     const db = await getDb();
     db.run('DELETE FROM appointments WHERE id = ?', [id]);
     saveDb();
+    invalidateAiCache('briefing');
     res.json({ success: true, id });
   } catch (err) {
     console.error('Error deleting appointment:', err);
@@ -249,6 +279,7 @@ app.post('/api/tasks', async (req: Request, res: Response) => {
       [id, 'user_demo', title, dueDate, priority, 0]
     );
     saveDb();
+    invalidateAiCache('briefing');
 
     res.status(201).json({
       id,
@@ -277,6 +308,7 @@ app.patch('/api/tasks/:id/toggle', async (req: Request, res: Response) => {
 
     db.run('UPDATE tasks SET completed = ? WHERE id = ?', [newCompleted ? 1 : 0, id]);
     saveDb();
+    invalidateAiCache('briefing');
 
     res.json({ id, completed: newCompleted });
   } catch (err) {
@@ -291,6 +323,7 @@ app.delete('/api/tasks/:id', async (req: Request, res: Response) => {
     const db = await getDb();
     db.run('DELETE FROM tasks WHERE id = ?', [id]);
     saveDb();
+    invalidateAiCache('briefing');
     res.json({ success: true, id });
   } catch (err) {
     console.error('Error deleting task:', err);
@@ -341,14 +374,16 @@ app.put('/api/contacts', async (req: Request, res: Response) => {
 // -------------------------------------------------------------
 // GENAI ENDPOINTS
 // -------------------------------------------------------------
-app.post('/api/ai/briefing', async (req: Request, res: Response) => {
+app.post('/api/ai/briefing', aiRateLimiter, async (req: Request, res: Response) => {
   try {
+    const language = (req.body.language || req.query.language || 'en') as any;
     const data = await getFullUserData('user_demo');
     const briefing = await generateDailyBriefing({
       userName: data.user.name,
       medicines: data.medicines,
       appointments: data.appointments,
       tasks: data.tasks,
+      language,
     });
     res.json(briefing);
   } catch (err) {
@@ -362,13 +397,17 @@ app.post('/api/ai/briefing', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/ai/simplify', async (req: Request, res: Response) => {
+app.post('/api/ai/simplify', aiRateLimiter, async (req: Request, res: Response) => {
   try {
     const text = req.body.text || req.body.documentText || req.body.content;
+    const language = (req.body.language || 'en') as any;
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Please provide text or document content to simplify.' });
     }
-    const result = await simplifyDocument(text);
+    if (text.length > 20000) {
+      return res.status(400).json({ error: 'Document is too long. Please provide up to 20,000 characters.' });
+    }
+    const result = await simplifyDocument(text, language);
     res.json(result);
   } catch (err) {
     console.error('Error in document simplify API:', err);
@@ -376,13 +415,32 @@ app.post('/api/ai/simplify', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/ai/safety-check', async (req: Request, res: Response) => {
+app.post('/api/ai/simplify-more', aiRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const text = req.body.text || req.body.explanation;
+    const language = (req.body.language || 'en') as any;
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ error: 'Please provide explanation text to simplify further.' });
+    }
+    const result = await simplifyDocumentMore(text, language);
+    res.json(result);
+  } catch (err) {
+    console.error('Error in simplify-more API:', err);
+    res.status(500).json({ error: 'Unable to simplify further right now.' });
+  }
+});
+
+app.post('/api/ai/safety-check', aiRateLimiter, async (req: Request, res: Response) => {
   try {
     const message = req.body.message || req.body.messageText || req.body.text;
+    const language = (req.body.language || 'en') as any;
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Please provide a message to check.' });
     }
-    const result = await analyzeSuspiciousMessage(message);
+    if (message.length > 5000) {
+      return res.status(400).json({ error: 'Message is too long. Please provide up to 5,000 characters.' });
+    }
+    const result = await analyzeSuspiciousMessage(message, language);
     res.json(result);
   } catch (err) {
     console.error('Error in safety check API:', err);
@@ -390,11 +448,14 @@ app.post('/api/ai/safety-check', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/ai/ask', async (req: Request, res: Response) => {
+app.post('/api/ai/ask', aiRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { question } = req.body;
+    const { question, language = 'en' } = req.body;
     if (!question || typeof question !== 'string') {
       return res.status(400).json({ error: 'Please ask a question.' });
+    }
+    if (question.length > 500) {
+      return res.status(400).json({ error: 'Question is too long. Please keep under 500 characters.' });
     }
     const data = await getFullUserData('user_demo');
     const answer = await answerCompanionQuestion({
@@ -404,6 +465,7 @@ app.post('/api/ai/ask', async (req: Request, res: Response) => {
       appointments: data.appointments,
       tasks: data.tasks,
       trustedContact: data.trustedContacts[0],
+      language,
     });
     res.json({ answer });
   } catch (err) {
@@ -434,12 +496,12 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Saathi Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Aasra Server running on http://0.0.0.0:${PORT}`);
   });
 }
 
 startServer().catch((err) => {
-  console.error('Fatal error starting Saathi server:', err);
+  console.error('Fatal error starting Aasra server:', err);
   process.exit(1);
 });
 export default app;

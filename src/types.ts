@@ -1,6 +1,7 @@
 export type FontSizePreference = 'normal' | 'large' | 'extra-large';
 export type ContrastPreference = 'standard' | 'high-contrast';
 export type MotionPreference = 'normal' | 'reduced';
+export type LanguagePreference = 'en' | 'hi' | 'hinglish';
 
 export interface UserPreference {
   id: string;
@@ -8,6 +9,19 @@ export interface UserPreference {
   fontSize: FontSizePreference;
   highContrast: ContrastPreference;
   reducedMotion: MotionPreference;
+  language?: LanguagePreference;
+}
+
+export type VoiceAvatarState = 'idle' | 'listening' | 'thinking' | 'speaking' | 'error';
+
+export interface ProactiveSuggestion {
+  id: string;
+  promptText: string;
+  actionLabel: string;
+  actionType: 'appointment_reminder' | 'medicine_water' | 'task_alert';
+  detail: string;
+  dismissed?: boolean;
+  confirmed?: boolean;
 }
 
 export interface User {
@@ -92,6 +106,8 @@ export interface DailyBriefingResult {
   summary: string;
   highlights: string[];
   closingMessage: string;
+  proactiveSuggestion?: ProactiveSuggestion;
+  language?: LanguagePreference;
 }
 
 export type AppView =

@@ -102,7 +102,7 @@ export const MedicinesView: React.FC = () => {
             Important Health Note
           </h2>
           <p className="text-sm sm:text-base font-semibold text-amber-900 dark:text-amber-300 leading-relaxed mt-0.5">
-            This schedule is based solely on information provided by you or your caregiver. Saathi is a daily organizer and does not provide medical advice or prescribe treatments. Always consult your doctor or pharmacist with questions about your medication.
+            This schedule is based solely on information provided by you or your caregiver. Aasra is a daily organizer and does not provide medical advice or prescribe treatments. Always consult your doctor or pharmacist with questions about your medication.
           </p>
         </div>
       </div>

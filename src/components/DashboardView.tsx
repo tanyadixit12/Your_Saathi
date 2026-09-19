@@ -11,12 +11,13 @@ import {
   CheckCircle2,
   Clock,
   MapPin,
-  AlertCircle,
   PlusCircle,
   RefreshCw,
   PhoneCall,
   Sparkles,
   ArrowRight,
+  Bell,
+  X,
 } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
@@ -36,9 +37,14 @@ export const DashboardView: React.FC = () => {
     setIsVoiceAssistantOpen,
     speakText,
     actionMessage,
+    dismissProactiveSuggestion,
+    confirmProactiveSuggestion,
+    language,
+    t,
   } = useApp();
 
-  const todayStr = new Date().toLocaleDateString('en-US', {
+  const locale = language === 'hi' ? 'hi-IN' : 'en-US';
+  const todayStr = new Date().toLocaleDateString(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -50,6 +56,9 @@ export const DashboardView: React.FC = () => {
   const pendingTasks = tasks.filter((t) => !t.completed);
   const primaryTask = pendingTasks[0] || tasks[0];
   const trustedContact = trustedContacts[0] || { name: 'Rahul Sharma', relationship: 'Son', phone: '+1-555-0199' };
+
+  const suggestion = dailyBriefing?.proactiveSuggestion;
+  const showSuggestionBanner = suggestion && !suggestion.dismissed && !suggestion.confirmed;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
@@ -73,31 +82,80 @@ export const DashboardView: React.FC = () => {
               {todayStr}
             </span>
             <h1 className="text-3xl sm:text-5xl font-black text-stone-950 dark:text-white">
-              GOOD MORNING, {user?.name?.toUpperCase() || 'ANITA'}
+              {t.goodMorning}, {user?.name?.toUpperCase() || 'ANITA'}
             </h1>
             <p className="text-xl sm:text-2xl font-bold text-stone-700 dark:text-stone-300 mt-1">
-              Here is what matters today.
+              {t.whatMattersToday}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsVoiceAssistantOpen(true)}
-              className="flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl shadow-lg transition-transform active:scale-95 border-2 border-emerald-700"
-              aria-label="Talk to Saathi Voice Assistant"
+              className="flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl shadow-lg transition-transform active:scale-95 border-2 border-emerald-700 focus-visible:ring-4 ring-emerald-400 min-h-[56px]"
+              aria-label={`Talk to ${t.appName} Voice Assistant`}
             >
               <Mic className="w-7 h-7" />
-              <span>Talk to Saathi</span>
+              <span>{t.talkToAasra}</span>
             </button>
           </div>
         </div>
+
+        {/* AI PROACTIVE SUGGESTION BANNER */}
+        {showSuggestionBanner && (
+          <div className="mb-6 bg-gradient-to-r from-amber-100 to-amber-50 dark:from-amber-950/60 dark:to-stone-800 border-2 border-amber-400 dark:border-amber-600 rounded-2xl p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                      Aasra Proactive Care Suggestion
+                    </span>
+                  </div>
+                  <p className="text-lg sm:text-xl font-black text-stone-900 dark:text-white mt-1">
+                    {suggestion.promptText}
+                  </p>
+                  <p className="text-sm font-semibold text-stone-600 dark:text-stone-300 mt-0.5">
+                    {suggestion.detail}
+                  </p>
+                  <div className="flex items-center gap-3 mt-3">
+                    <button
+                      onClick={confirmProactiveSuggestion}
+                      className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm shadow-sm transition-colors focus-visible:ring-2 ring-amber-500"
+                    >
+                      {suggestion.actionLabel || (suggestion.actionType === 'appointment_reminder'
+                        ? 'Set Reminder'
+                        : "I'll Do This Now")}
+                    </button>
+                    <button
+                      onClick={dismissProactiveSuggestion}
+                      className="px-3 py-2 rounded-xl text-stone-600 dark:text-stone-400 hover:bg-amber-200/50 dark:hover:bg-stone-700 font-bold text-sm"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={dismissProactiveSuggestion}
+                className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 p-1"
+                aria-label="Dismiss suggestion"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* AI DAILY BRIEFING */}
         <div className="bg-amber-50 dark:bg-stone-800/80 border-2 border-amber-300 dark:border-amber-600/60 rounded-2xl p-6 relative">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-extrabold text-lg">
               <Sparkles className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-              <span>Daily Briefing</span>
+              <span>{t.appName}'s Daily Briefing</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -108,19 +166,19 @@ export const DashboardView: React.FC = () => {
                   }
                 }}
                 disabled={loadingBriefing}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-base shadow-sm transition-colors"
-                aria-label="Read daily briefing out loud"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-base shadow-sm transition-colors focus-visible:ring-2 ring-amber-500 min-h-[44px]"
+                aria-label={t.listen}
               >
                 <Volume2 className="w-5 h-5" />
-                <span>Listen</span>
+                <span>{t.listen}</span>
               </button>
 
               <button
-                onClick={fetchDailyBriefing}
+                onClick={() => fetchDailyBriefing(true)}
                 disabled={loadingBriefing}
-                className="p-2 rounded-xl bg-white dark:bg-stone-700 border border-stone-300 dark:border-stone-600 hover:bg-stone-100 text-stone-700 dark:text-stone-200"
-                aria-label="Refresh daily briefing"
-                title="Refresh briefing"
+                className="p-2.5 rounded-xl bg-white dark:bg-stone-700 border border-stone-300 dark:border-stone-600 hover:bg-stone-100 text-stone-700 dark:text-stone-200 min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 ring-amber-500"
+                aria-label={t.refresh}
+                title={t.refresh}
               >
                 <RefreshCw className={`w-5 h-5 ${loadingBriefing ? 'animate-spin' : ''}`} />
               </button>
@@ -129,7 +187,7 @@ export const DashboardView: React.FC = () => {
 
           {loadingBriefing ? (
             <p className="text-xl font-bold text-stone-600 dark:text-stone-300 animate-pulse">
-              Preparing your personalized morning briefing...
+              Preparing your morning briefing...
             </p>
           ) : dailyBriefing ? (
             <div className="space-y-3">
@@ -160,7 +218,7 @@ export const DashboardView: React.FC = () => {
         </div>
       </section>
 
-      {/* THE 6 CORE ACTION CARDS GRID */}
+      {/* THE 5 CORE ACTION CARDS GRID */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6" aria-label="What to do today">
         {/* CARD 1: MEDICINES */}
         <article className="bg-white dark:bg-stone-900 border-3 border-stone-300 dark:border-stone-700 hover:border-amber-500 rounded-3xl p-6 sm:p-7 shadow-sm flex flex-col justify-between">
@@ -172,7 +230,7 @@ export const DashboardView: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-stone-950 dark:text-white">
-                    1. Medicines
+                    1. {t.medicines}
                   </h2>
                   <span className="text-base font-bold text-stone-600 dark:text-stone-400">
                     {pendingMedicines.length} medicine{pendingMedicines.length === 1 ? '' : 's'} left to take
@@ -215,14 +273,14 @@ export const DashboardView: React.FC = () => {
             {upcomingMedicine && upcomingMedicine.status !== 'taken' && (
               <button
                 onClick={() => markMedicineStatus(upcomingMedicine.id, 'taken')}
-                className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg shadow-sm transition-transform active:scale-95"
+                className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg shadow-sm transition-transform active:scale-95 focus-visible:ring-4 ring-emerald-400 min-h-[48px]"
               >
-                ✓ Mark as taken
+                {t.markAsTaken}
               </button>
             )}
             <button
               onClick={() => setCurrentView('medicines')}
-              className="text-amber-700 dark:text-amber-400 hover:underline font-extrabold text-base flex items-center gap-1 min-h-[48px]"
+              className="text-amber-700 dark:text-amber-400 hover:underline font-extrabold text-base flex items-center gap-1 min-h-[48px] focus-visible:ring-2 ring-amber-500"
             >
               <span>View all medicines ({medicines.length})</span>
               <ArrowRight className="w-5 h-5" />
@@ -240,7 +298,7 @@ export const DashboardView: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-stone-950 dark:text-white">
-                    2. Appointments
+                    2. {t.schedule}
                   </h2>
                   <span className="text-base font-bold text-stone-600 dark:text-stone-400">
                     Next visit scheduled
@@ -300,14 +358,14 @@ export const DashboardView: React.FC = () => {
             {upcomingAppointment && (
               <button
                 onClick={() => toggleAppointment(upcomingAppointment.id)}
-                className="px-5 py-3 rounded-xl bg-stone-200 hover:bg-stone-300 dark:bg-stone-700 dark:hover:bg-stone-600 text-stone-900 dark:text-white font-bold text-base transition-colors"
+                className="px-5 py-3 rounded-xl bg-stone-200 hover:bg-stone-300 dark:bg-stone-700 dark:hover:bg-stone-600 text-stone-900 dark:text-white font-bold text-base transition-colors focus-visible:ring-2 ring-stone-400 min-h-[48px]"
               >
                 {upcomingAppointment.completed ? 'Mark Upcoming' : 'Mark Completed'}
               </button>
             )}
             <button
               onClick={() => setCurrentView('appointments')}
-              className="text-amber-700 dark:text-amber-400 hover:underline font-extrabold text-base flex items-center gap-1 min-h-[48px]"
+              className="text-amber-700 dark:text-amber-400 hover:underline font-extrabold text-base flex items-center gap-1 min-h-[48px] focus-visible:ring-2 ring-amber-500"
             >
               <span>Manage schedule</span>
               <ArrowRight className="w-5 h-5" />
@@ -354,7 +412,7 @@ export const DashboardView: React.FC = () => {
                   </span>
                   <button
                     onClick={() => toggleTask(primaryTask.id)}
-                    className="p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 border border-emerald-300 font-bold text-sm flex items-center gap-1"
+                    className="p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 border border-emerald-300 font-bold text-sm flex items-center gap-1 focus-visible:ring-2 ring-emerald-500"
                     aria-label={`Mark task ${primaryTask.title} as ${primaryTask.completed ? 'incomplete' : 'complete'}`}
                   >
                     <CheckCircle2 className="w-5 h-5" />
@@ -373,7 +431,7 @@ export const DashboardView: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-stone-200 dark:border-stone-800 flex justify-end">
             <button
               onClick={() => setCurrentView('appointments')}
-              className="text-amber-700 dark:text-amber-400 hover:underline font-extrabold text-base flex items-center gap-1 min-h-[48px]"
+              className="text-amber-700 dark:text-amber-400 hover:underline font-extrabold text-base flex items-center gap-1 min-h-[48px] focus-visible:ring-2 ring-amber-500"
             >
               <span>View all tasks ({tasks.length})</span>
               <ArrowRight className="w-5 h-5" />
@@ -391,7 +449,7 @@ export const DashboardView: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-stone-950 dark:text-white">
-                    4. Stay Safe
+                    4. {t.staySafe}
                   </h2>
                   <span className="text-base font-bold text-stone-600 dark:text-stone-400">
                     Scam & Message Guard
@@ -414,13 +472,13 @@ export const DashboardView: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-stone-200 dark:border-stone-800 flex justify-between items-center">
             <button
               onClick={() => setCurrentView('safety')}
-              className="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-base shadow-sm"
+              className="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-base shadow-sm focus-visible:ring-4 ring-rose-400 min-h-[48px]"
             >
-              Check a Message
+              {t.checkAMessage}
             </button>
             <button
               onClick={() => setCurrentView('safety')}
-              className="text-amber-700 dark:text-amber-400 hover:underline font-extrabold text-base flex items-center gap-1 min-h-[48px]"
+              className="text-amber-700 dark:text-amber-400 hover:underline font-extrabold text-base flex items-center gap-1 min-h-[48px] focus-visible:ring-2 ring-amber-500"
             >
               <span>Safety guidance</span>
               <ArrowRight className="w-5 h-5" />
@@ -434,21 +492,21 @@ export const DashboardView: React.FC = () => {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 bg-amber-700/80 px-3.5 py-1.5 rounded-full text-sm font-black mb-3">
                 <FileQuestion className="w-5 h-5" />
-                <span>5. Understand Something</span>
+                <span>5. {t.helpMeUnderstand}</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black text-white mb-3 leading-tight">
                 Confused by a bill, letter, or bank message?
               </h2>
               <p className="text-xl font-bold text-amber-100 leading-relaxed">
-                Saathi turns complex documents and legal notices into 6 plain-language answers: What is this? What do I need to do? When?
+                Aasra turns complex documents and notices into plain-language answers: What is this? What do I need to do? When?
               </p>
             </div>
 
             <button
               onClick={() => setCurrentView('understand')}
-              className="px-8 py-5 rounded-2xl bg-white text-amber-900 hover:bg-amber-100 font-black text-2xl shadow-xl transition-transform active:scale-95 whitespace-nowrap min-h-[64px]"
+              className="px-8 py-5 rounded-2xl bg-white text-amber-950 hover:bg-amber-100 font-black text-2xl shadow-xl transition-transform active:scale-95 whitespace-nowrap min-h-[64px] focus-visible:ring-4 ring-white"
             >
-              Help me understand something
+              {t.helpMeUnderstand}
             </button>
           </div>
         </article>
@@ -464,10 +522,10 @@ export const DashboardView: React.FC = () => {
             <span>Family Contact:</span>
             <a
               href={`tel:${trustedContact.phone}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-xl font-black hover:bg-emerald-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 text-white rounded-xl font-black hover:bg-emerald-700 transition-colors focus-visible:ring-4 ring-emerald-400 min-h-[44px]"
               aria-label={`Call ${trustedContact.name}`}
             >
-              <PhoneCall className="w-4 h-4" />
+              <PhoneCall className="w-5 h-5" />
               <span>Call {trustedContact.name} ({trustedContact.relationship})</span>
             </a>
           </div>
@@ -476,7 +534,7 @@ export const DashboardView: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             onClick={() => setCurrentView('medicines')}
-            className="p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 hover:border-amber-500 font-bold text-stone-900 dark:text-white text-base flex flex-col items-center justify-center gap-2 min-h-[72px]"
+            className="p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 hover:border-amber-500 font-bold text-stone-900 dark:text-white text-base flex flex-col items-center justify-center gap-2 min-h-[72px] focus-visible:ring-4 ring-amber-500"
           >
             <PlusCircle className="w-6 h-6 text-emerald-600" />
             <span>Add Medicine</span>
@@ -484,7 +542,7 @@ export const DashboardView: React.FC = () => {
 
           <button
             onClick={() => setCurrentView('appointments')}
-            className="p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 hover:border-amber-500 font-bold text-stone-900 dark:text-white text-base flex flex-col items-center justify-center gap-2 min-h-[72px]"
+            className="p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 hover:border-amber-500 font-bold text-stone-900 dark:text-white text-base flex flex-col items-center justify-center gap-2 min-h-[72px] focus-visible:ring-4 ring-amber-500"
           >
             <Calendar className="w-6 h-6 text-blue-600" />
             <span>Add Appointment</span>
@@ -492,7 +550,7 @@ export const DashboardView: React.FC = () => {
 
           <button
             onClick={() => setCurrentView('understand')}
-            className="p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 hover:border-amber-500 font-bold text-stone-900 dark:text-white text-base flex flex-col items-center justify-center gap-2 min-h-[72px]"
+            className="p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 hover:border-amber-500 font-bold text-stone-900 dark:text-white text-base flex flex-col items-center justify-center gap-2 min-h-[72px] focus-visible:ring-4 ring-amber-500"
           >
             <FileQuestion className="w-6 h-6 text-amber-600" />
             <span>Understand Document</span>
@@ -500,7 +558,7 @@ export const DashboardView: React.FC = () => {
 
           <button
             onClick={() => setCurrentView('safety')}
-            className="p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 hover:border-amber-500 font-bold text-stone-900 dark:text-white text-base flex flex-col items-center justify-center gap-2 min-h-[72px]"
+            className="p-4 rounded-2xl bg-white dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 hover:border-amber-500 font-bold text-stone-900 dark:text-white text-base flex flex-col items-center justify-center gap-2 min-h-[72px] focus-visible:ring-4 ring-amber-500"
           >
             <ShieldCheck className="w-6 h-6 text-rose-600" />
             <span>Check a Message</span>
